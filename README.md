@@ -9,6 +9,7 @@ Environment                 | Default                       | Description
 ----------------------------|-------------------------------|-------------------
 `TOKEN`                     | _required_                    | Token to connect to.
 `ASSET_ID`                  | `/data/.asset.json`           | Asset Id _or_ file where the Agent asset Id is stored _(must be a volume mount)_.
+`IN_CLUSTER`                | `1`                           | For when this agent is started on a pod inside the cluster, 0 _(=disabled)_ or 1 _(=enabled)_.
 `API_URI`                   | https://api.infrasonar.com    | InfraSonar API.
 `CHECK_XXX_INTERVAL`        | `300`                         | Interval for the kubernetes check in seconds.
 `VERIFY_SSL`                | `1`                           | Verify SSL certificate, 0 _(=disabled)_ or 1 _(=enabled)_.
