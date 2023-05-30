@@ -13,7 +13,7 @@ class CheckKubernetes(CheckBase):
     async def run(cls):
         if cls.interval == 0:
             raise Exception(f'{cls.key} is disabled')
-        
+
         if int(os.getenv('IN_CLUSTER', '1')):
             await config.load_incluster_config()
         else:
@@ -23,16 +23,40 @@ class CheckKubernetes(CheckBase):
 
             v1 = client.CoreV1Api(api)
             res = await v1.list_pod_for_all_namespaces()
+            namespaces = [
+                {
+                    'name': i.metadata.name,
+                    'phase': i.status.phase,
+                    'creation_timestamp':
+                    int(i.metadata.creation_timestamp.timestamp()),
+                }
+                for i in res.items
+            ]
 
-        pods = [
-            {
-                'name': i.metadata.name,
-                'namespace': i.metadata.namespace,
-                'phase': i.status.phase,
-            }
-            for i in res.items
-        ]
+            res = await v1.list_node()
+            nodes = [
+                {
+                    'name': i.metadata.name,
+                    'creation_timestamp':
+                    int(i.metadata.creation_timestamp.timestamp()),
+                }
+                for i in res.items
+            ]
+
+            res = await v1.list_pod_for_all_namespaces()
+            pods = [
+                {
+                    'name': i.metadata.name,
+                    'namespace': i.metadata.namespace,
+                    'phase': i.status.phase,
+                    'creation_timestamp':
+                    int(i.metadata.creation_timestamp.timestamp()),
+                }
+                for i in res.items
+            ]
 
         return {
+            'namespaces': namespaces,
+            'nodes': nodes,
             'pods': pods,
         }
