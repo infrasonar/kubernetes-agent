@@ -15,4 +15,3 @@ Environment                 | Default                       | Description
 `LOG_LEVEL`                 | `warning`                     | Log level _(error, warning, info, debug)_.
 `LOG_COLORIZED`             | `0`                           | Log colorized, 0 _(=disabled)_ or 1 _(=enabled)_.
 `LOG_FMT`                   | `%y%m...`                     | Default format is `%y%m%d %H:%M:%S`.
-# kubernetes-agent
