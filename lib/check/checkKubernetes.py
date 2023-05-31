@@ -85,7 +85,7 @@ class CheckKubernetes(CheckBase):
                     'name': f'{i.metadata.namespace}/{c.name}',
                     'container_name': c.name,
                     'namespace': i.metadata.namespace,
-                    'pod': i.metadata.name,
+                    'pod': f'{i.metadata.namespace}/{i.metadata.name}',
                     'ports': c.ports and [
                         f'{p.protocol}:{p.container_port}'
                         for p in c.ports
