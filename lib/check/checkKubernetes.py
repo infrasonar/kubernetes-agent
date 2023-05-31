@@ -3,6 +3,7 @@ from kubernetes_asyncio import client, config
 from kubernetes_asyncio.client.api_client import ApiClient
 from typing import Dict, List, Any
 from pylibagent.check import CheckBase
+from .utils import dfmt, dfmt_1000, dfmt_1024
 
 
 class CheckKubernetes(CheckBase):
@@ -33,30 +34,36 @@ class CheckKubernetes(CheckBase):
                 for i in res.items
             ]
 
-            res = await v1.list_node()
+            res = await v1.list_node(pretty='false')
             nodes = [
                 {
                     'name': i.metadata.name,
                     'creation_timestamp':
                     int(i.metadata.creation_timestamp.timestamp()),
-                    'allocatable_cpu': i.status.allocatable['cpu'],
-                    'allocatable_memory': i.status.allocatable['memory'],
-                    # 'allocatable_pods': i.status.allocatable['pods'],
+                    'allocatable_cpu': dfmt(i.status.allocatable['cpu']),
+                    'allocatable_memory':
+                    dfmt_1024(i.status.allocatable['memory']),
+                    # 'allocatable_pods': dfmt(i.status.allocatable['pods']),
 
-                    'capacity_cpu': i.status.capacity['cpu'],
-                    'capacity_memory': i.status.capacity['memory'],
-                    # 'capacity_pods': i.status.capacity['pods'],
+                    'capacity_cpu': dfmt(i.status.capacity['cpu']),
+                    'capacity_memory':
+                    dfmt_1024(i.status.capacity['memory']),
+                    # 'capacity_pods': dfmt(i.status.capacity['pods']),
 
-                    'architecture': i.node_info.architecture,
-                    'container_runtime_version': i.node_info.container_runtime_version,
-                    'kernel_version': i.node_info.kernel_version,
-                    'kube_proxy_version': i.node_info.kube_proxy_version,
-                    'kubelet_version': i.node_info.kubelet_version,
-                    'operating_system': i.node_info.operating_system,
+                    'architecture': i.status.node_info.architecture,
+                    'container_runtime_version':
+                    i.status.node_info.container_runtime_version,
+                    'kernel_version': i.status.node_info.kernel_version,
+                    'kube_proxy_version':
+                    i.status.node_info.kube_proxy_version,
+                    'kubelet_version': i.status.node_info.kubelet_version,
+                    'operating_system': i.status.node_info.operating_system,
 
                     'conditions': [
                         c.type
-                        for c in i.status.conditions if c.status]
+                        for c in i.status.conditions
+                        if c.status == 'True'  # lib gives raw values
+                    ]
                 }
                 for i in res.items
             ]
@@ -64,9 +71,10 @@ class CheckKubernetes(CheckBase):
             res = await v1.list_pod_for_all_namespaces()
             pods = [
                 {
-                    'name': i.metadata.name,
+                    'name': f'{i.metadata.namespace}/{i.metadata.name}',
                     'namespace': i.metadata.namespace,
                     'phase': i.status.phase,
+                    'pod_name': i.metadata.name,
                     'creation_timestamp':
                     int(i.metadata.creation_timestamp.timestamp()),
                 }
@@ -74,21 +82,22 @@ class CheckKubernetes(CheckBase):
             ]
             containers = [
                 {
-                    'name': c.name,
+                    'name': f'{i.metadata.namespace}/{c.name}',
+                    'container_name': c.name,
+                    'namespace': i.metadata.namespace,
                     'pod': i.metadata.name,
                     'ports': c.ports and [
                         f'{p.protocol}:{p.container_port}'
                         for p in c.ports
                     ],
-                    'resources_limits_cpu':
-                    c.resources.limits and c.resources.limits.cpu,
-                    'resources_limits_memory':
-                    c.resources.limits and c.resources.limits.memory,
-                    'resources_requests_cpu':
-                    c.resources.requests and c.resources.requests.cpu,
-                    'resources_requests_memory':
-                    c.resources.requests and c.resources.requests.memory,
-                    # TODO volume_mounts?
+                    'limits_cpu':c.resources.limits and
+                    dfmt_1000(c.resources.limits.get('cpu')),
+                    'limits_memory': c.resources.limits and
+                    dfmt_1024(c.resources.limits.get('memory')),
+                    'requests_cpu': c.resources.requests and
+                    dfmt_1000(c.resources.requests.get('cpu')),
+                    'requests_memory': c.resources.requests and
+                    dfmt_1024(c.resources.requests.get('memory')),
                 }
                 for i in res.items
                 for c in i.spec.containers
