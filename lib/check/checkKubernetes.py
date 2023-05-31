@@ -7,7 +7,7 @@ from pylibagent.check import CheckBase
 
 class CheckKubernetes(CheckBase):
     key = 'kubernetes'
-    interval = int(os.getenv('CHECK_XXX_INTERVAL', '900'))
+    interval = int(os.getenv('CHECK_INTERVAL', '300'))
 
     @classmethod
     async def run(cls):
