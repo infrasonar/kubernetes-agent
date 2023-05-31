@@ -3,7 +3,7 @@ from kubernetes_asyncio import client, config
 from kubernetes_asyncio.client.api_client import ApiClient
 from typing import Dict, List, Any
 from pylibagent.check import CheckBase
-from .utils import dfmt, dfmt_1000, dfmt_1024
+from .utils import dfmt
 
 
 class CheckKubernetes(CheckBase):
@@ -41,13 +41,11 @@ class CheckKubernetes(CheckBase):
                     'creation_timestamp':
                     int(i.metadata.creation_timestamp.timestamp()),
                     'allocatable_cpu': dfmt(i.status.allocatable['cpu']),
-                    'allocatable_memory':
-                    dfmt_1024(i.status.allocatable['memory']),
+                    'allocatable_memory': dfmt(i.status.allocatable['memory']),
                     # 'allocatable_pods': dfmt(i.status.allocatable['pods']),
 
                     'capacity_cpu': dfmt(i.status.capacity['cpu']),
-                    'capacity_memory':
-                    dfmt_1024(i.status.capacity['memory']),
+                    'capacity_memory': dfmt(i.status.capacity['memory']),
                     # 'capacity_pods': dfmt(i.status.capacity['pods']),
 
                     'architecture': i.status.node_info.architecture,
@@ -91,13 +89,13 @@ class CheckKubernetes(CheckBase):
                         for p in c.ports
                     ],
                     'limits_cpu':c.resources.limits and
-                    dfmt_1000(c.resources.limits.get('cpu')),
+                    dfmt(c.resources.limits.get('cpu')),
                     'limits_memory': c.resources.limits and
-                    dfmt_1024(c.resources.limits.get('memory')),
+                    dfmt(c.resources.limits.get('memory')),
                     'requests_cpu': c.resources.requests and
-                    dfmt_1000(c.resources.requests.get('cpu')),
+                    dfmt(c.resources.requests.get('cpu')),
                     'requests_memory': c.resources.requests and
-                    dfmt_1024(c.resources.requests.get('memory')),
+                    dfmt(c.resources.requests.get('memory')),
                 }
                 for i in res.items
                 for c in i.spec.containers
