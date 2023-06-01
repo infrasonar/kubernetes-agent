@@ -79,10 +79,6 @@ class CheckKubernetes(CheckBase):
                     'container_name': c.name,
                     'namespace': i.metadata.namespace,
                     'pod': f'{i.metadata.namespace}/{i.metadata.name}',
-                    'ports': c.ports and [
-                        f'{p.protocol}:{p.container_port}'
-                        for p in c.ports
-                    ],
                     'limits_cpu':c.resources.limits and
                     dfmt(c.resources.limits.get('cpu')),
                     'limits_memory': c.resources.limits and
