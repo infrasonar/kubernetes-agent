@@ -16,7 +16,7 @@ class CheckKubernetes(CheckBase):
             raise Exception(f'{cls.key} is disabled')
 
         if int(os.getenv('IN_CLUSTER', '1')):
-            await config.load_incluster_config()
+            config.load_incluster_config()
         else:
             await config.load_kube_config()
 
