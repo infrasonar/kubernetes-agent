@@ -74,12 +74,12 @@ class CheckKubernetes(CheckBase):
             ]
             containers = [
                 {
-                    'name': 
+                    'name':
                     f'{i.metadata.namespace}/{i.metadata.name}/{c.name}',
                     'container_name': c.name,
                     'namespace': i.metadata.namespace,
                     'pod': f'{i.metadata.namespace}/{i.metadata.name}',
-                    'limits_cpu':c.resources.limits and
+                    'limits_cpu': c.resources.limits and
                     dfmt(c.resources.limits.get('cpu')),
                     'limits_memory': c.resources.limits and
                     dfmt(c.resources.limits.get('memory')),
