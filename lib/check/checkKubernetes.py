@@ -80,7 +80,8 @@ class CheckKubernetes(CheckBase):
             ]
             containers = [
                 {
-                    'name': f'{i.metadata.namespace}/{c.name}',
+                    'name': 
+                    f'{i.metadata.namespace}/{i.metadata.name}/{c.name}',
                     'container_name': c.name,
                     'namespace': i.metadata.namespace,
                     'pod': f'{i.metadata.namespace}/{i.metadata.name}',
