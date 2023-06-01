@@ -42,11 +42,11 @@ class CheckKubernetes(CheckBase):
                     int(i.metadata.creation_timestamp.timestamp()),
                     'allocatable_cpu': dfmt(i.status.allocatable['cpu']),
                     'allocatable_memory': dfmt(i.status.allocatable['memory']),
-                    # 'allocatable_pods': dfmt(i.status.allocatable['pods']),
+                    'allocatable_pods': dfmt(i.status.allocatable['pods']),
 
                     'capacity_cpu': dfmt(i.status.capacity['cpu']),
                     'capacity_memory': dfmt(i.status.capacity['memory']),
-                    # 'capacity_pods': dfmt(i.status.capacity['pods']),
+                    'capacity_pods': dfmt(i.status.capacity['pods']),
 
                     'architecture': i.status.node_info.architecture,
                     'container_runtime_version':
@@ -56,12 +56,6 @@ class CheckKubernetes(CheckBase):
                     i.status.node_info.kube_proxy_version,
                     'kubelet_version': i.status.node_info.kubelet_version,
                     'operating_system': i.status.node_info.operating_system,
-
-                    'conditions': [
-                        c.type
-                        for c in i.status.conditions
-                        if c.status == 'True'  # lib gives raw values
-                    ]
                 }
                 for i in res.items
             ]
