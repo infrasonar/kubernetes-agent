@@ -3,6 +3,8 @@
 
 # InfraSonar Kubernetes agent
 
+Documentation: https://docs.infrasonar.com/collectors/agents/kubernetes/
+
 ## Environment variables
 
 Environment                 | Default                       | Description
