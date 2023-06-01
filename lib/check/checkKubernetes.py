@@ -40,12 +40,11 @@ class CheckKubernetes(CheckBase):
                     'name': i.metadata.name,
                     'creation_timestamp':
                     int(i.metadata.creation_timestamp.timestamp()),
-                    'allocatable_cpu': 
-                    float(dfmt(i.status.allocatable['cpu'])),
+                    'allocatable_cpu': dfmt(i.status.allocatable['cpu'], True),
                     'allocatable_memory': dfmt(i.status.allocatable['memory']),
                     'allocatable_pods': dfmt(i.status.allocatable['pods']),
 
-                    'capacity_cpu': float(dfmt(i.status.capacity['cpu'])),
+                    'capacity_cpu': dfmt(i.status.capacity['cpu'], True),
                     'capacity_memory': dfmt(i.status.capacity['memory']),
                     'capacity_pods': dfmt(i.status.capacity['pods']),
 
@@ -81,11 +80,11 @@ class CheckKubernetes(CheckBase):
                     'namespace': i.metadata.namespace,
                     'pod': f'{i.metadata.namespace}/{i.metadata.name}',
                     'limits_cpu': c.resources.limits and
-                    float(dfmt(c.resources.limits.get('cpu'))),
+                    dfmt(c.resources.limits.get('cpu'), True),
                     'limits_memory': c.resources.limits and
                     dfmt(c.resources.limits.get('memory')),
                     'requests_cpu': c.resources.requests and
-                    float(dfmt(c.resources.requests.get('cpu'))),
+                    dfmt(c.resources.requests.get('cpu'), True),
                     'requests_memory': c.resources.requests and
                     dfmt(c.resources.requests.get('memory')),
                 }
