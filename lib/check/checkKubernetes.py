@@ -47,7 +47,7 @@ def on_pod_metrics(item, metrics: dict) -> dict:
 
     try:
         usage_memory = sum(
-            dfmt(c['usage']['memory'], True)
+            dfmt(c['usage']['memory'])
             for c in metrics[ky].values())
     except Exception:
         pass
