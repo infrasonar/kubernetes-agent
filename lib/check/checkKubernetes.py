@@ -22,6 +22,17 @@ class CheckKubernetes(CheckBase):
 
         async with ApiClient() as api:
 
+            cust = client.CustomObjectsApi(api)
+            res = await cust.list_cluster_custom_object(
+                'metrics.k8s.io', 'v1beta1', 'nodes')
+            node_metrics = {
+                i['metadata']['name']: {
+                    'usage_cpu': dfmt(i['usage']['cpu'], True),
+                    'usage_memory': dfmt(i['usage']['memory']),
+                }
+                for i in res['items']
+            }
+
             v1 = client.CoreV1Api(api)
             res = await v1.list_namespace()
             namespaces = [
@@ -56,6 +67,7 @@ class CheckKubernetes(CheckBase):
                     i.status.node_info.kube_proxy_version,
                     'kubelet_version': i.status.node_info.kubelet_version,
                     'operating_system': i.status.node_info.operating_system,
+                    **node_metrics.get(i.metadata.name, {})
                 }
                 for i in res.items
             ]
