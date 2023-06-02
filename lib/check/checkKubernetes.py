@@ -15,13 +15,15 @@ def on_node_metrics(item, metrics: dict) -> dict:
 
     try:
         usage_cpu = dfmt(metrics[ky]['usage']['cpu'], True)
-        percent_cpu = usage_cpu / dfmt(item.status.allocatable['cpu'], True)
+        percent_cpu = \
+            usage_cpu / dfmt(item.status.allocatable['cpu'], True) * 100.0
     except Exception:
         pass
 
     try:
         usage_memory = dfmt(metrics[ky]['usage']['memory'])
-        percent_memory = usage_memory / dfmt(item.status.allocatable['memory'])
+        percent_memory = \
+            usage_memory / dfmt(item.status.allocatable['memory']) * 100.0
     except Exception:
         pass
 
