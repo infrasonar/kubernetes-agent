@@ -116,7 +116,8 @@ class CheckKubernetes(CheckBase):
                 for i in res.items
             }
 
-            if 'v1beta1.metrics.k8s.io' in apis:
+            metrics_api = 'v1beta1.metrics.k8s.io'
+            if metrics_api in apis and apis[metrics_api]['available']:
                 cust = client.CustomObjectsApi(api)
                 res = await cust.list_cluster_custom_object(
                     'metrics.k8s.io', 'v1beta1', 'nodes')
@@ -127,7 +128,7 @@ class CheckKubernetes(CheckBase):
 
                 res = await cust.list_cluster_custom_object(
                     'metrics.k8s.io', 'v1beta1', 'pods')
-                metrics = {
+                pod_metrics = {
                     (
                         i['metadata']['namespace'],
                         i['metadata']['name']
@@ -145,7 +146,7 @@ class CheckKubernetes(CheckBase):
                     "apiservices`; see: "
                     "https://github.com/kubernetes-sigs/metrics-server")
                 node_metrics = {}
-                metrics = {}
+                pod_metrics = {}
 
             v1 = client.CoreV1Api(api)
             res = await v1.list_namespace()
@@ -204,7 +205,7 @@ class CheckKubernetes(CheckBase):
                         cs.restart_count
                         for cs in i.status.container_statuses
                     ),
-                    **on_pod_metrics(i, metrics)
+                    **on_pod_metrics(i, pod_metrics)
                 }
                 for i in res.items
             ]
@@ -228,7 +229,7 @@ class CheckKubernetes(CheckBase):
                         for cs in i.status.container_statuses
                         if cs.name == c.name
                     ),
-                    **on_container_metrics(i, c, metrics)
+                    **on_container_metrics(i, c, pod_metrics)
                 }
                 for i in res.items
                 for c in i.spec.containers
