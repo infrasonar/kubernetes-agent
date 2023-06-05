@@ -140,7 +140,7 @@ class CheckKubernetes(CheckBase):
                 }
             else:
                 logging.warning(
-                    "API Service `v1beta1.metrics.k8s.io` is not available; "
+                    f"API Service `{metrics_api}` is not available; "
                     "make sure the metrics server is installed and check if "
                     "the api service is running using `kubectl get "
                     "apiservices`; see: "
