@@ -196,9 +196,9 @@ class CheckKubernetes(CheckBase):
                     'pod_name': i.metadata.name,
                     'creation_timestamp':
                     int(i.metadata.creation_timestamp.timestamp()),
-                    'containers': len(i.status.container_statuses),
+                    'containers': len(i.spec.containers),
                     'ready_containers': sum(
-                        cs.ready
+                        cs.ready and cs.state.running is not None
                         for cs in i.status.container_statuses
                     ),
                     'restarts': sum(
