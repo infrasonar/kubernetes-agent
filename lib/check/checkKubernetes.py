@@ -36,6 +36,83 @@ def on_node_metrics(item, metrics: dict) -> dict:
     }
 
 
+def on_pod(item) -> dict:
+    restarts = 0
+    total_containers = len(item.spec.containers)
+    ready_containers = 0
+    reason = item.status.phase
+    for c in item.status.conditions:
+        if c.type == 'PodScheduled' and c.reason == 'SchedulingGated':
+            reason = 'SchedulingGated'
+
+    initializing = False
+    if item.status.init_container_statuses is not None:
+        for i, cs in enumerate(item.status.init_container_statuses):
+            restarts += cs.restart_count
+            terminated = cs.state.terminated
+            waiting = cs.state.waiting
+            if terminated is not None and terminated.exit_code == 0:
+                continue
+            elif terminated is not None:
+                if not terminated.reason:
+                    if terminated.signal != 0:
+                        reason = f'Init.Signal:{terminated.signal}'
+                    else:
+                        reason = f'Init.ExitCode:{terminated.exit_code}'
+                else:
+                    reason = f'Init:{terminated.reason}'
+                initializing = True
+            elif waiting is not None and len(waiting.reason) and \
+                    waiting.reason != 'PodInitializing':
+                reason = f'Init:{waiting.reason}'
+                initializing = True
+            else:
+                reason = f'Init:({i}/{len(item.spec.init_containers)})'
+                initializing = True
+            break
+
+    if not initializing:
+        restarts = 0
+        has_running = False
+        for cs in item.status.container_statuses:
+            restarts += cs.restart_count
+            terminated = cs.state.terminated
+            waiting = cs.state.waiting
+            if waiting is not None and waiting.reason:
+                reason = waiting.reason
+            elif terminated is not None:
+                if not terminated.reason:
+                    if terminated.signal != 0:
+                        reason = f'Signal:{terminated.signal}'
+                    else:
+                        reason = f'ExitCode:{terminated.exit_code}'
+                else:
+                    reason = terminated.reason
+            elif cs.ready and cs.state.running is not None:
+                has_running = True
+                ready_containers += 1
+
+        if reason == 'Completed' and has_running:
+            if any(c.type == 'Ready' and c.status
+                    for c in item.status.conditions):
+                reason = 'Running'
+            else:
+                reason = 'NotReady'
+
+    if item.metadata.deletion_timestamp is not None:
+        if item.status.reason == 'NodeLost':
+            reason = 'Unknown'
+        else:
+            reason = 'Terminating'
+
+    return {
+        'containers': total_containers,
+        'ready_containers': ready_containers,
+        'restarts': restarts,
+        'status': reason,
+    }
+
+
 def on_pod_metrics(item, metrics: dict) -> dict:
     ky = item.metadata.namespace, item.metadata.name
     usage_cpu = None
@@ -196,15 +273,7 @@ class CheckKubernetes(CheckBase):
                     'pod_name': i.metadata.name,
                     'creation_timestamp':
                     int(i.metadata.creation_timestamp.timestamp()),
-                    'containers': len(i.status.container_statuses),
-                    'ready_containers': sum(
-                        cs.ready
-                        for cs in i.status.container_statuses
-                    ),
-                    'restarts': sum(
-                        cs.restart_count
-                        for cs in i.status.container_statuses
-                    ),
+                    **on_pod(i),
                     **on_pod_metrics(i, pod_metrics)
                 }
                 for i in res.items
