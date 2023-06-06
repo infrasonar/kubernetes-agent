@@ -99,7 +99,6 @@ def on_pod(item) -> dict:
             else:
                 reason = 'NotReady'
 
-    # print(item)
     if item.metadata.deletion_timestamp is not None:
         if item.status.reason == 'NodeLost':
             reason = 'Unknown'
