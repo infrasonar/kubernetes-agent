@@ -10,6 +10,30 @@ from .utils import dfmt
 LABEL_NODE_ROLE_PREFIX = 'node-role.kubernetes.io/'
 
 
+def on_node(item) -> dict:
+    roles = []
+    for l in item.metadata.labels:
+        if l.startswith(LABEL_NODE_ROLE_PREFIX):
+            role = l[len(LABEL_NODE_ROLE_PREFIX):]
+            if role:
+                roles.append(role)
+
+    status = []
+    for c in item.status.conditions:
+        if c.type == 'Ready':
+            status.append('Ready' if c.status == 'True' else 'NotReady')
+            break
+    else:
+        status.append('Unknown')
+    if item.spec.unschedulable:
+        status.append('SchedulingDisabled')
+
+    return {
+        'roles': roles,
+        'status': ','.join(status),
+    }
+
+
 def on_node_metrics(item, metrics: dict) -> dict:
     ky = item.metadata.name
     percent_cpu = None
@@ -262,11 +286,7 @@ class CheckKubernetes(CheckBase):
                     i.status.node_info.kube_proxy_version,
                     'kubelet_version': i.status.node_info.kubelet_version,
                     'operating_system': i.status.node_info.operating_system,
-                    'roles': ','.join(
-                        l[len(LABEL_NODE_ROLE_PREFIX):]
-                        for l in i.metadata.labels
-                        if l.startswith(LABEL_NODE_ROLE_PREFIX)
-                    ),
+                    **on_node(i),
                     **on_node_metrics(i, node_metrics)
                 }
                 for i in res.items
@@ -313,10 +333,48 @@ class CheckKubernetes(CheckBase):
 
             ]
 
+            res = await v1.list_persistent_volume_claim_for_all_namespaces()
+            pvcs = [
+                {
+                    'name': f'{i.metadata.namespace}/{i.metadata.name}',
+                    'namespace': i.metadata.namespace,
+                    'creation_timestamp':
+                    int(i.metadata.creation_timestamp.timestamp()),
+                    'storage_class': i.spec.storage_class_name,
+                    'volume_name': i.spec.volume_name,
+                    'phase': i.status.phase,
+                    'access_modes': i.status.access_modes,
+                    'capacity': i.status.capacity['storage'],
+                }
+                for i in res.items
+            ]
+
+            res = await v1.list_service_for_all_namespaces()
+            for i in res.items:
+                print(i)
+            svcs = [
+                {
+                    'name': f'{i.metadata.namespace}/{i.metadata.name}',
+                    'namespace': i.metadata.namespace,
+                    'creation_timestamp':
+                    int(i.metadata.creation_timestamp.timestamp()),
+                    'type': i.spec.type,
+                    'cluster_ip': i.spec.cluster_ip,
+                    'external_ips': i.spec.external_ips,
+                    'ports': [
+                        f'{p.port}/{p.protocol}'
+                        for p in i.spec.ports
+                    ],
+                }
+                for i in res.items
+            ]
+
         return {
             'apiservices': tuple(apis.values()),
             'namespaces': namespaces,
             'nodes': nodes,
             'pods': pods,
+            'pvcs': pvcs,
+            'services': svcs,
             'containers': containers,
         }
