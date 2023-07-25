@@ -357,7 +357,8 @@ class CheckKubernetes(CheckBase):
                     'creation_timestamp':
                     int(i.metadata.creation_timestamp.timestamp()),
                     'type': i.spec.type,
-                    'cluster_ip': i.spec.cluster_ip,
+                    'cluster_ip': i.spec.cluster_ip
+                        if i.spec.cluster_ip != 'None' else None,
                     'external_ips': i.spec.external_ips,
                     'ports': [
                         f'{p.port}/{p.protocol}'
