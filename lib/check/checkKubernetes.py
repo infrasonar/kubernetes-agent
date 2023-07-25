@@ -344,7 +344,7 @@ class CheckKubernetes(CheckBase):
                     'volume_name': i.spec.volume_name,
                     'phase': i.status.phase,
                     'access_modes': i.status.access_modes,
-                    'capacity': i.status.capacity['storage'],
+                    'capacity': dfmt(i.status.capacity.get('storage')),
                 }
                 for i in res.items
             ]
