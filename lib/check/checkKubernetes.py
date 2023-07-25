@@ -7,6 +7,9 @@ from pylibagent.check import CheckBase
 from .utils import dfmt
 
 
+LABEL_NODE_ROLE_PREFIX = 'node-role.kubernetes.io/'
+
+
 def on_node_metrics(item, metrics: dict) -> dict:
     ky = item.metadata.name
     percent_cpu = None
@@ -259,6 +262,11 @@ class CheckKubernetes(CheckBase):
                     i.status.node_info.kube_proxy_version,
                     'kubelet_version': i.status.node_info.kubelet_version,
                     'operating_system': i.status.node_info.operating_system,
+                    'roles': ','.join(
+                        l[len(LABEL_NODE_ROLE_PREFIX):]
+                        for l in i.metadata.labels
+                        if l.startswith(LABEL_NODE_ROLE_PREFIX)
+                    ),
                     **on_node_metrics(i, node_metrics)
                 }
                 for i in res.items
