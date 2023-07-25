@@ -350,8 +350,6 @@ class CheckKubernetes(CheckBase):
             ]
 
             res = await v1.list_service_for_all_namespaces()
-            for i in res.items:
-                print(i)
             svcs = [
                 {
                     'name': f'{i.metadata.namespace}/{i.metadata.name}',
