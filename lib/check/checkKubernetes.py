@@ -190,6 +190,23 @@ def on_container_metrics(item, container, metrics: dict) -> dict:
     }
 
 
+def svc_external_ips(item) -> dict:
+    spec = item.spec
+    status = item.status
+
+    if spec.type in ('ClusterIP', 'NodePort'):
+        return [] if is_none(spec.external_ips) else spec.external_ips
+    elif spec.type == 'LoadBalancer':
+        ips = [] if is_none(spec.external_ips) else spec.external_ips
+        for i in status.load_balancer.ingress:
+            if i.ip != '':
+                ips.append(i.ip)
+            elif i.hostname != '':
+                ips.append(i.hostname)
+        return ips
+    return []
+
+
 class CheckKubernetes(CheckBase):
     key = 'kubernetes'
     interval = int(os.getenv('CHECK_INTERVAL', '300'))
@@ -363,8 +380,7 @@ class CheckKubernetes(CheckBase):
                     'type': i.spec.type,
                     'cluster_ip': None if is_none(i.spec.cluster_ip)
                         else i.spec.cluster_ip,
-                    'external_ips': [] if is_none(i.spec.external_ips)
-                        else i.spec.external_ips,
+                    'external_ips': svc_external_ips(i),
                     'ports': [
                         f'{p.port}/{p.protocol}'
                         for p in i.spec.ports
