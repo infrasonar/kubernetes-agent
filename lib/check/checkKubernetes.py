@@ -12,9 +12,9 @@ LABEL_NODE_ROLE_PREFIX = 'node-role.kubernetes.io/'
 
 def on_node(item) -> dict:
     roles = []
-    for l in item.metadata.labels:
-        if l.startswith(LABEL_NODE_ROLE_PREFIX):
-            role = l[len(LABEL_NODE_ROLE_PREFIX):]
+    for label in item.metadata.labels:
+        if label.startswith(LABEL_NODE_ROLE_PREFIX):
+            role = label[len(LABEL_NODE_ROLE_PREFIX):]
             if role:
                 roles.append(role)
 
