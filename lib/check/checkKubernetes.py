@@ -10,6 +10,10 @@ from .utils import dfmt
 LABEL_NODE_ROLE_PREFIX = 'node-role.kubernetes.io/'
 
 
+def is_none(inp: Any):
+    return inp is None or inp == 'None'
+
+
 def on_node(item) -> dict:
     roles = []
     for label in item.metadata.labels:
@@ -357,9 +361,10 @@ class CheckKubernetes(CheckBase):
                     'creation_timestamp':
                     int(i.metadata.creation_timestamp.timestamp()),
                     'type': i.spec.type,
-                    'cluster_ip': i.spec.cluster_ip
-                        if i.spec.cluster_ip != 'None' else None,
-                    'external_ips': i.spec.external_ips,
+                    'cluster_ip': None if is_none(i.spec.cluster_ip)
+                        else i.spec.cluster_ip,
+                    'external_ips': [] if is_none(i.spec.external_ips)
+                        else i.spec.external_ips,
                     'ports': [
                         f'{p.port}/{p.protocol}'
                         for p in i.spec.ports
