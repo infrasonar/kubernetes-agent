@@ -33,7 +33,7 @@ def on_node(item) -> dict:
         status.append('SchedulingDisabled')
 
     return {
-        'roles': roles,
+        'roles': sorted(roles),
         'status': ','.join(status),
     }
 
@@ -364,7 +364,7 @@ class CheckKubernetes(CheckBase):
                     'storage_class': i.spec.storage_class_name,
                     'volume_name': i.spec.volume_name,
                     'phase': i.status.phase,
-                    'access_modes': i.status.access_modes,
+                    'access_modes': sorted(i.status.access_modes),
                     'capacity': dfmt(i.status.capacity.get('storage')),
                 }
                 for i in res.items
@@ -380,11 +380,11 @@ class CheckKubernetes(CheckBase):
                     'type': i.spec.type,
                     'cluster_ip': None if is_none(i.spec.cluster_ip)
                         else i.spec.cluster_ip,
-                    'external_ips': svc_external_ips(i),
-                    'ports': [
+                    'external_ips': sorted(svc_external_ips(i)),
+                    'ports': sorted(
                         f'{p.port}/{p.protocol}'
                         for p in i.spec.ports
-                    ],
+                    ),
                 }
                 for i in res.items
             ]
