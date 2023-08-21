@@ -392,7 +392,7 @@ class CheckKubernetes(CheckBase):
                     'cluster_ip': None if is_none(i.spec.cluster_ip)
                         else i.spec.cluster_ip,
                     'external_ips': sorted(svc_external_ips(i)),
-                    'ports': sorted(
+                    'ports': [] if is_none(i.spec.ports) else sorted(
                         f'{p.port}/{p.protocol}'
                         for p in i.spec.ports
                     ),
