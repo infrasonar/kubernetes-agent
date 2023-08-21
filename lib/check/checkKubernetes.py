@@ -198,7 +198,7 @@ def svc_external_ips(item) -> dict:
         return [] if is_none(spec.external_ips) else spec.external_ips
     elif spec.type == 'LoadBalancer':
         ips = [] if is_none(spec.external_ips) else spec.external_ips
-        if not is_none(status.status.load_balancer.ingress):
+        if not is_none(status.load_balancer.ingress):
             for i in status.load_balancer.ingress:
                 if i.ip != '':
                     ips.append(i.ip)
