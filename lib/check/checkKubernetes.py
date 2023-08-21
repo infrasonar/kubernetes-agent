@@ -213,6 +213,16 @@ class CheckKubernetes(CheckBase):
 
     @classmethod
     async def run(cls):
+        try:
+            res = await cls._run()
+        except Exception as e:
+            logging.exception('Kubernetes exception')
+            raise
+        else:
+            return res
+
+    @classmethod
+    async def _run(cls):
         if cls.interval == 0:
             raise Exception(f'{cls.key} is disabled')
 
