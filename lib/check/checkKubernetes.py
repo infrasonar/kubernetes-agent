@@ -214,6 +214,9 @@ class CheckKubernetes(CheckBase):
 
     @classmethod
     async def run(cls):
+        if cls.interval == 0:
+            raise Exception(f'{cls.key} is disabled')
+
         try:
             res = await cls._run()
         except Exception as e:
@@ -224,9 +227,6 @@ class CheckKubernetes(CheckBase):
 
     @classmethod
     async def _run(cls):
-        if cls.interval == 0:
-            raise Exception(f'{cls.key} is disabled')
-
         if int(os.getenv('IN_CLUSTER', '1')):
             config.load_incluster_config()
         else:
