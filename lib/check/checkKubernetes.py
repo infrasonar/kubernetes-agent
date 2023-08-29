@@ -384,7 +384,6 @@ class CheckKubernetes(CheckBase):
                 except Exception as e:
                     msg = str(e) or type(e).__name__
                     logging.warning(f'failed to retrieve pvc usage: {msg}')
-                    break
                 for pod in node_summary['pods']:
                     for vol in pod.get('volume', []):
                         pvc_ref = vol.get('pvcRef')
