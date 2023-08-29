@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from kubernetes_asyncio import client, config
@@ -190,6 +191,24 @@ def on_container_metrics(item, container, metrics: dict) -> dict:
     }
 
 
+def on_pvc_usage_metrics(item, metrics: dict) -> dict:
+    try:
+        volume = metrics[item.metadata.name]
+    except Exception:
+        return {}
+    try:
+        percent = volume['usedBytes'] / volume['capacityBytes'] * 100
+    except Exception:
+        percent = None
+
+    return {
+        'available_bytes': volume['availableBytes'],
+        'capacity_bytes': volume['capacityBytes'],
+        'used_bytes': volume['usedBytes'],
+        'percent_used': percent
+    }
+
+
 def svc_external_ips(item) -> dict:
     spec = item.spec
     status = item.status
@@ -354,6 +373,24 @@ class CheckKubernetes(CheckBase):
 
             ]
 
+            pvc_usage = {}
+            for node in nodes:
+                try:
+                    # returns single_quote json
+                    text = await v1.connect_get_node_proxy_with_path(
+                        node['name'], 'stats/summary')
+                    replaced = text.replace("'", '"')
+                    node_summary = json.loads(replaced)
+                except Exception as e:
+                    msg = str(e) or type(e).__name__
+                    logging.warning(f'failed to retrieve pvc usage: {msg}')
+                    break
+                for pod in node_summary['pods']:
+                    for vol in pod.get('volume', []):
+                        pvc_ref = vol.get('pvcRef')
+                        if pvc_ref:
+                            pvc_usage[pvc_ref['name']] = vol
+
             res = await v1.list_persistent_volume_claim_for_all_namespaces()
             pvcs = [
                 {
@@ -366,6 +403,7 @@ class CheckKubernetes(CheckBase):
                     'phase': i.status.phase,
                     'access_modes': sorted(i.status.access_modes),
                     'capacity': dfmt(i.status.capacity.get('storage')),
+                    **on_pvc_usage_metrics(i, pvc_usage)
                 }
                 for i in res.items
             ]
