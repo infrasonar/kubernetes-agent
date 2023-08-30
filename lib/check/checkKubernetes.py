@@ -217,11 +217,12 @@ def svc_external_ips(item) -> dict:
         return [] if is_none(spec.external_ips) else spec.external_ips
     elif spec.type == 'LoadBalancer':
         ips = [] if is_none(spec.external_ips) else spec.external_ips
-        for i in status.load_balancer.ingress:
-            if i.ip != '':
-                ips.append(i.ip)
-            elif i.hostname != '':
-                ips.append(i.hostname)
+        if not is_none(status.load_balancer.ingress):
+            for i in status.load_balancer.ingress:
+                if i.ip != '':
+                    ips.append(i.ip)
+                elif i.hostname != '':
+                    ips.append(i.hostname)
         return ips
     return []
 
@@ -235,6 +236,16 @@ class CheckKubernetes(CheckBase):
         if cls.interval == 0:
             raise Exception(f'{cls.key} is disabled')
 
+        try:
+            res = await cls._run()
+        except Exception as e:
+            logging.exception('Kubernetes exception')
+            raise
+        else:
+            return res
+
+    @classmethod
+    async def _run(cls):
         if int(os.getenv('IN_CLUSTER', '1')):
             config.load_incluster_config()
         else:
@@ -422,7 +433,7 @@ class CheckKubernetes(CheckBase):
                     'cluster_ip': None if is_none(i.spec.cluster_ip)
                         else i.spec.cluster_ip,
                     'external_ips': sorted(svc_external_ips(i)),
-                    'ports': sorted(
+                    'ports': [] if is_none(i.spec.ports) else sorted(
                         f'{p.port}/{p.protocol}'
                         for p in i.spec.ports
                     ),
