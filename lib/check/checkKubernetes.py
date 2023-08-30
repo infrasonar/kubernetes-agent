@@ -376,8 +376,10 @@ class CheckKubernetes(CheckBase):
             pvc_usage = {}
             for node in nodes:
                 try:
-                    # returns single_quote json and requires
-                    # nodes/proxy access in resource group ""
+                    # returns single_quote json;
+                    # Requires:
+                    #   verb "get" and resource "nodes/proxy" access in
+                    #   apiGroup group "".
                     text = await v1.connect_get_node_proxy_with_path(
                         node['name'], 'stats/summary')
                     replaced = text.replace("'", '"')
