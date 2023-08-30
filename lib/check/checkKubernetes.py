@@ -197,7 +197,7 @@ def on_pvc_usage_metrics(item, metrics: dict) -> dict:
     except Exception:
         return {}
     try:
-        percent = volume['usedBytes'] / volume['capacityBytes'] * 100
+        percent = volume['usedBytes'] / volume['capacityBytes'] * 100.0
     except Exception:
         percent = None
 
