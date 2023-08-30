@@ -376,7 +376,8 @@ class CheckKubernetes(CheckBase):
             pvc_usage = {}
             for node in nodes:
                 try:
-                    # returns single_quote json
+                    # returns single_quote json and requires
+                    # nodes/proxy access in resource group ""
                     text = await v1.connect_get_node_proxy_with_path(
                         node['name'], 'stats/summary')
                     replaced = text.replace("'", '"')
@@ -384,11 +385,12 @@ class CheckKubernetes(CheckBase):
                 except Exception as e:
                     msg = str(e) or type(e).__name__
                     logging.warning(f'failed to retrieve pvc usage: {msg}')
-                for pod in node_summary['pods']:
-                    for vol in pod.get('volume', []):
-                        pvc_ref = vol.get('pvcRef')
-                        if pvc_ref:
-                            pvc_usage[pvc_ref['name']] = vol
+                else:
+                    for pod in node_summary['pods']:
+                        for vol in pod.get('volume', []):
+                            pvc_ref = vol.get('pvcRef')
+                            if pvc_ref:
+                                pvc_usage[pvc_ref['name']] = vol
 
             res = await v1.list_persistent_volume_claim_for_all_namespaces()
             pvcs = [
