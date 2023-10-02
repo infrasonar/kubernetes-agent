@@ -6,6 +6,7 @@ from kubernetes_asyncio.client.api_client import ApiClient
 from typing import Dict, List, Any
 from pylibagent.check import CheckBase
 from .utils import dfmt
+from ..version import __version__ as version
 
 
 LABEL_NODE_ROLE_PREFIX = 'node-role.kubernetes.io/'
@@ -442,6 +443,10 @@ class CheckKubernetes(CheckBase):
             ]
 
         return {
+            'infrasonar': [{
+                'name': 'agent',
+                'version': version,
+            }],
             'apiservices': tuple(apis.values()),
             'namespaces': namespaces,
             'nodes': nodes,
