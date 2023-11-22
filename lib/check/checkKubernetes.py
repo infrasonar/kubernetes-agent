@@ -3,7 +3,7 @@ import logging
 import os
 from kubernetes_asyncio import client, config
 from kubernetes_asyncio.client.api_client import ApiClient
-from typing import Dict, List, Any
+from typing import Any
 from pylibagent.check import CheckBase
 from .utils import dfmt
 from ..version import __version__ as version
@@ -239,7 +239,7 @@ class CheckKubernetes(CheckBase):
 
         try:
             res = await cls._run()
-        except Exception as e:
+        except Exception:
             logging.exception('Kubernetes exception')
             raise
         else:
