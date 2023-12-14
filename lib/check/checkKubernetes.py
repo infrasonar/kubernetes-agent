@@ -13,7 +13,11 @@ LABEL_NODE_ROLE_PREFIX = 'node-role.kubernetes.io/'
 
 
 def is_none(inp: Any):
-    return inp is None or inp == 'None'
+    return inp is None or inp == 'None' or inp == ''
+
+
+def is_none_empty_str(inp):
+    return isinstance(inp, str) and inp != ''
 
 
 def on_node(item) -> dict:
@@ -210,19 +214,30 @@ def on_pvc_usage_metrics(item, metrics: dict) -> dict:
     }
 
 
+def ensure_list_none_empty_strings(inp):
+    if is_none(inp):
+        return []
+    if isinstance(inp, str):
+        return inp.split(',')
+    if isinstance(inp, (list, tuple)):
+        return [itm for itm in inp if is_none_empty_str(itm)]
+    logging.warning(f'Expecting a list of strings but got: {inp}')
+    return []
+
+
 def svc_external_ips(item) -> dict:
     spec = item.spec
     status = item.status
 
     if spec.type in ('ClusterIP', 'NodePort'):
-        return [] if is_none(spec.external_ips) else spec.external_ips
+        return ensure_list_none_empty_strings(spec.external_ips)
     elif spec.type == 'LoadBalancer':
-        ips = [] if is_none(spec.external_ips) else spec.external_ips
+        ips = ensure_list_none_empty_strings(spec.external_ips)
         if not is_none(status.load_balancer.ingress):
             for i in status.load_balancer.ingress:
-                if i.ip != '':
+                if is_none_empty_str(i.ip):
                     ips.append(i.ip)
-                elif i.hostname != '':
+                elif is_none_empty_str(i.hostname):
                     ips.append(i.hostname)
         return ips
     return []
@@ -437,6 +452,7 @@ class CheckKubernetes(CheckBase):
                     'ports': [] if is_none(i.spec.ports) else sorted(
                         f'{p.port}/{p.protocol}'
                         for p in i.spec.ports
+                        if p is not None
                     ),
                 }
                 for i in res.items
