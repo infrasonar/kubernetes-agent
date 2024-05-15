@@ -29,7 +29,10 @@ def on_node(item) -> dict:
                 roles.append(role)
 
     status = []
-    for c in item.status.conditions:
+    # It is possible that `item.status.conditions` is None; When this is the
+    # case we return with status `Unknown` although I'm not sure that this is
+    # correct.
+    for c in item.status.conditions or []:
         if c.type == 'Ready':
             status.append('Ready' if c.status == 'True' else 'NotReady')
             break
@@ -78,7 +81,11 @@ def on_pod(item) -> dict:
     total_containers = len(item.spec.containers)
     ready_containers = 0
     reason = item.status.phase
-    for c in item.status.conditions:
+    # It seems that `item.status.conditions` can be None as well, most likely
+    # when a pod has status `Failed` with reason `Evicted`. I'm not sure if the
+    # reason is correct as when this case happened, the code not have the
+    # `or []` part so we only looked at an iteration exception.
+    for c in item.status.conditions or []:
         if c.type == 'PodScheduled' and c.reason == 'SchedulingGated':
             reason = 'SchedulingGated'
 
