@@ -118,23 +118,24 @@ def on_pod(item) -> dict:
     if not initializing:
         restarts = 0
         has_running = False
-        for cs in item.status.container_statuses:
-            restarts += cs.restart_count
-            terminated = cs.state.terminated
-            waiting = cs.state.waiting
-            if waiting is not None and waiting.reason:
-                reason = waiting.reason
-            elif terminated is not None:
-                if not terminated.reason:
-                    if terminated.signal != 0:
-                        reason = f'Signal:{terminated.signal}'
+        if item.status.container_statuses is not None:
+            for cs in item.status.container_statuses:
+                restarts += cs.restart_count
+                terminated = cs.state.terminated
+                waiting = cs.state.waiting
+                if waiting is not None and waiting.reason:
+                    reason = waiting.reason
+                elif terminated is not None:
+                    if not terminated.reason:
+                        if terminated.signal != 0:
+                            reason = f'Signal:{terminated.signal}'
+                        else:
+                            reason = f'ExitCode:{terminated.exit_code}'
                     else:
-                        reason = f'ExitCode:{terminated.exit_code}'
-                else:
-                    reason = terminated.reason
-            elif cs.ready and cs.state.running is not None:
-                has_running = True
-                ready_containers += 1
+                        reason = terminated.reason
+                elif cs.ready and cs.state.running is not None:
+                    has_running = True
+                    ready_containers += 1
 
         if reason == 'Completed' and has_running:
             if any(c.type == 'Ready' and c.status
@@ -395,11 +396,12 @@ class CheckKubernetes(CheckBase):
                     dfmt(c.resources.requests.get('cpu'), True),
                     'requests_memory': c.resources.requests and
                     dfmt(c.resources.requests.get('memory')),
-                    'restarts': sum(
-                        cs.restart_count
-                        for cs in i.status.container_statuses
-                        if cs.name == c.name
-                    ),
+                    'restarts': 0 if i.status.container_statuses is None else
+                        sum(
+                            cs.restart_count
+                            for cs in i.status.container_statuses
+                            if cs.name == c.name
+                        ),
                     **on_container_metrics(i, c, pod_metrics)
                 }
                 for i in res.items
