@@ -56,15 +56,19 @@ def on_node_metrics(item, metrics: dict) -> dict:
 
     try:
         usage_cpu = dfmt(metrics[ky]['usage']['cpu'], True)
-        percent_cpu = \
-            usage_cpu / dfmt(item.status.allocatable['cpu'], True) * 100.0
+        allocatable_cpu = dfmt(item.status.allocatable['cpu'], True)
+        assert isinstance(usage_cpu, float)
+        assert isinstance(allocatable_cpu, float)
+        percent_cpu = usage_cpu / allocatable_cpu * 100
     except Exception:
         pass
 
     try:
         usage_memory = dfmt(metrics[ky]['usage']['memory'])
-        percent_memory = \
-            usage_memory / dfmt(item.status.allocatable['memory']) * 100.0
+        allocatable_memory = dfmt(item.status.allocatable['memory'])
+        assert isinstance(usage_memory, int)
+        assert isinstance(allocatable_memory, int)
+        percent_memory = usage_memory / allocatable_memory * 100
     except Exception:
         pass
 
@@ -164,16 +168,18 @@ def on_pod_metrics(item, metrics: dict) -> dict:
     usage_memory = None
 
     try:
-        usage_cpu = sum(
+        usage_cpu = sum(v for v in (
             dfmt(c['usage']['cpu'], True)
-            for c in metrics[ky].values())
+            for c in metrics[ky].values()
+        ) if isinstance(v, float))
     except Exception:
         pass
 
     try:
-        usage_memory = sum(
+        usage_cpu = sum(v for v in (
             dfmt(c['usage']['memory'])
-            for c in metrics[ky].values())
+            for c in metrics[ky].values()
+        ) if isinstance(v, int))
     except Exception:
         pass
 
@@ -233,7 +239,7 @@ def ensure_list_none_empty_strings(inp):
     return []
 
 
-def svc_external_ips(item) -> dict:
+def svc_external_ips(item) -> list:
     spec = item.spec
     status = item.status
 
@@ -416,8 +422,8 @@ class CheckKubernetes(CheckBase):
                     # Requires:
                     #   verb "get" and resource "nodes/proxy" access in
                     #   apiGroup group "".
-                    text = await v1.connect_get_node_proxy_with_path(
-                        node['name'], 'stats/summary')
+                    text: str = await v1.connect_get_node_proxy_with_path(
+                        node['name'], 'stats/summary')  # type: ignore
                     replaced = text.replace("'", '"')
                     node_summary = json.loads(replaced)
                 except Exception as e:

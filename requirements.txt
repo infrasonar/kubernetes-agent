@@ -1,2 +1,2 @@
-kubernetes_asyncio==29.0.0
-pylibagent==0.2.1
+kubernetes_asyncio==31.1.0
+pylibagent==0.3.1
