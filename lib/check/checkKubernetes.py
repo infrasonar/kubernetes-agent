@@ -85,6 +85,13 @@ def on_pod(item) -> dict:
     total_containers = len(item.spec.containers)
     ready_containers = 0
     reason = item.status.phase
+    last_state = {
+        'last_state': None,
+        'last_state_reason': None,
+        'last_state_exit_code': None,
+        'last_state_started_at': None,
+        'last_state_finished_at': None,
+    }
     # It seems that `item.status.conditions` can be None as well, most likely
     # when a pod has status `Failed` with reason `Evicted`. I'm not sure if the
     # reason is correct as when this case happened, the code not have the
@@ -99,6 +106,7 @@ def on_pod(item) -> dict:
             restarts += cs.restart_count
             terminated = cs.state.terminated
             waiting = cs.state.waiting
+
             if terminated is not None and terminated.exit_code == 0:
                 continue
             elif terminated is not None:
@@ -124,6 +132,16 @@ def on_pod(item) -> dict:
         has_running = False
         if item.status.container_statuses is not None:
             for cs in item.status.container_statuses:
+                ls = cs.last_state.terminated
+                if ls is not None:
+                    last_state['last_state'] = 'Terminated'
+                    last_state['last_state_reason'] = ls.reason
+                    last_state['last_state_exit_code'] = ls.exit_code
+                    last_state['last_state_started_at'] = \
+                        ls.started_at.timestamp()
+                    last_state['last_state_finished_at'] = \
+                        ls.finished_at.timestamp()
+
                 restarts += cs.restart_count
                 terminated = cs.state.terminated
                 waiting = cs.state.waiting
@@ -159,6 +177,7 @@ def on_pod(item) -> dict:
         'ready_containers': ready_containers,
         'restarts': restarts,
         'status': reason,
+        **last_state,
     }
 
 
