@@ -195,7 +195,7 @@ def on_pod_metrics(item, metrics: dict) -> dict:
         pass
 
     try:
-        usage_cpu = sum(v for v in (
+        usage_memory = sum(v for v in (
             dfmt(c['usage']['memory'])
             for c in metrics[ky].values()
         ) if isinstance(v, int))
