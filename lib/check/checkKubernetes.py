@@ -3,7 +3,7 @@ import logging
 import os
 from kubernetes_asyncio import client, config
 from kubernetes_asyncio.client.api_client import ApiClient
-from typing import Any
+from typing import Any, Optional, Union, Dict
 from pylibagent.check import CheckBase
 from .utils import dfmt
 from ..version import __version__ as version
@@ -85,7 +85,7 @@ def on_pod(item) -> dict:
     total_containers = len(item.spec.containers)
     ready_containers = 0
     reason = item.status.phase
-    last_state = {
+    last_state: Dict[str, Optional[Union[str, int]]] = {
         'last_state': None,
         'last_state_reason': None,
         'last_state_exit_code': None,
