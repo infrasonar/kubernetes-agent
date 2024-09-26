@@ -59,7 +59,7 @@ def on_node_metrics(item, metrics: dict) -> dict:
         allocatable_cpu = dfmt(item.status.allocatable['cpu'], True)
         assert isinstance(usage_cpu, float)
         assert isinstance(allocatable_cpu, float)
-        percent_cpu = usage_cpu / allocatable_cpu * 100
+        percent_cpu = usage_cpu / allocatable_cpu * 100.0
     except Exception:
         pass
 
@@ -68,7 +68,7 @@ def on_node_metrics(item, metrics: dict) -> dict:
         allocatable_memory = dfmt(item.status.allocatable['memory'])
         assert isinstance(usage_memory, int)
         assert isinstance(allocatable_memory, int)
-        percent_memory = usage_memory / allocatable_memory * 100
+        percent_memory = usage_memory / allocatable_memory * 100.0
     except Exception:
         pass
 
@@ -187,18 +187,18 @@ def on_pod_metrics(item, metrics: dict) -> dict:
     usage_memory = None
 
     try:
-        usage_cpu = sum(v for v in (
+        usage_cpu = float(sum(v for v in (
             dfmt(c['usage']['cpu'], True)
             for c in metrics[ky].values()
-        ) if isinstance(v, float))
+        ) if isinstance(v, float)))
     except Exception:
         pass
 
     try:
-        usage_memory = sum(v for v in (
+        usage_memory = int(sum(v for v in (
             dfmt(c['usage']['memory'])
             for c in metrics[ky].values()
-        ) if isinstance(v, int))
+        ) if isinstance(v, int)))
     except Exception:
         pass
 
