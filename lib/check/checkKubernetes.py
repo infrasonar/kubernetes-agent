@@ -137,10 +137,12 @@ def on_pod(item) -> dict:
                     last_state['last_state'] = 'Terminated'
                     last_state['last_state_reason'] = ls.reason
                     last_state['last_state_exit_code'] = ls.exit_code
-                    last_state['last_state_started_at'] = \
-                        int(ls.started_at.timestamp())
-                    last_state['last_state_finished_at'] = \
-                        int(ls.finished_at.timestamp())
+                    if ls.started_at is not None:
+                        last_state['last_state_started_at'] = \
+                            int(ls.started_at.timestamp())
+                    if ls.finished_at is not None:
+                        last_state['last_state_finished_at'] = \
+                            int(ls.finished_at.timestamp())
 
                 restarts += cs.restart_count
                 terminated = cs.state.terminated
