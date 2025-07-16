@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import asyncio
 from kubernetes_asyncio import client, config
 from kubernetes_asyncio.client.api_client import ApiClient
 from typing import Any, Optional, Union, Dict
@@ -289,11 +290,17 @@ class CheckKubernetes(CheckBase):
 
         try:
             res = await cls._run()
-        except Exception:
-            logging.exception('Kubernetes exception')
-            raise
-        else:
-            return res
+        except Exception as e:
+            logging.warning(
+                f'Kubernetes exception, retry in a few seconds... ({e})')
+            await asyncio.sleep(8.0)
+            try:
+                res = await cls._run()
+            except Exception:
+                logging.exception('Kubernetes exception')
+                raise
+
+        return res
 
     @classmethod
     async def _run(cls):
