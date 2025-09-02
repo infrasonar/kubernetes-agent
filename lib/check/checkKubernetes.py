@@ -282,6 +282,7 @@ def svc_external_ips(item) -> list:
 class CheckKubernetes(CheckBase):
     key = 'kubernetes'
     interval = int(os.getenv('CHECK_INTERVAL', '300'))
+    wfr = int(os.getenv('WAIT_FOR_RETRY', '20'))
 
     @classmethod
     async def run(cls):
@@ -291,9 +292,13 @@ class CheckKubernetes(CheckBase):
         try:
             res = await cls._run()
         except Exception as e:
+            if cls.wfr <= 0:
+                raise  # no retry
+
             logging.warning(
-                f'Kubernetes exception, retry in a few seconds... ({e})')
-            await asyncio.sleep(8.0)
+                f'Kubernetes exception, retry in {cls.wfr} seconds... ({e})')
+            await asyncio.sleep(float(cls.wfr))
+
             try:
                 res = await cls._run()
             except Exception:
